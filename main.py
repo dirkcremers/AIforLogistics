@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.stats import gamma
-import pandas as pd
 
 def inventory_fill(mu: np.array, variance: np.array) -> np.array:
     inventory = mu + 1.97 * np.sqrt(variance)
@@ -20,12 +19,12 @@ def descretized_demand_distribution(mu: float, variance: float):
         np.ndarray: discrete distribution of the demand
     """
 
-    # scale = variance / mu
-    # shape = mu / scale
+    scale = variance / mu
+    shape = mu / scale
 
     # TODO: check if variance is equal to the scale in scipy cdf
 
-    a = gamma.cdf(np.arange(0, 11), mu, scale=np.sqrt(variance))
+    a = gamma.cdf(np.arange(0, 11), shape, scale=scale)
     a[-1] = 1.0
     b = np.diff(a)
     b = np.insert(b, 0, a[0])
@@ -104,7 +103,7 @@ def policy_evaluation(GAMMA: float) -> np.array:
                     V[store1, store2, store3] = value
 
         iteration += 1
-        if np.max(np.abs(V - V_old)) < 0.01:
+        if np.max(np.abs(V - V_old)) < 1:
             break
 
     return V
@@ -179,8 +178,15 @@ def policy_evaluation_single_step(GAMMA: float) -> np.array:
 GAMMA= 0.8
 mu = np.array([3, 5, 2])
 variance = np.array([1, 2, 3])
-# V = policy_evaluation(GAMMA)
-Q = policy_evaluation_single_step(GAMMA)
-print(Q)
+
+prob = descretized_demand_distribution(mu[0], variance[0])
+print(prob)
+
+V = policy_evaluation(GAMMA)
+print(V)
+
+
+# Q = policy_evaluation_single_step(GAMMA)
+# print(Q)
 # pd.DataFrame(V).to_csv('ValueIteration.csv')
 
