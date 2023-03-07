@@ -29,9 +29,9 @@ def descretized_demand_distribution(mu: float, variance: float):
 
     gamma_cdf = gamma.cdf(np.arange(0, 11), shape, scale=scale)
     gamma_cdf[-1] = 1.0
-    descretized_demand = np.diff(gamma_cdf)
-    descretized_demand = np.insert(descretized_demand, 0, gamma_cdf[0])
-    return descretized_demand
+    discretized_demand = np.diff(gamma_cdf)
+    discretized_demand = np.insert(discretized_demand, 0, gamma_cdf[0])
+    return discretized_demand
 
 
 def routing_cost(actions: np.array) -> float:
