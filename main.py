@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 import xlsxwriter
 import numpy as np
@@ -151,7 +153,6 @@ def policy_improvement_single_step(GAMMA: float) -> np.array:
 
                     # set initial value of best value and best action
                     best_value = -np.inf
-                    best_action = [-100, -100, -100]
 
                     # Iterate now over all possible actions to see if we can improve the policy with a certain action
                     for action1 in range(0, 11):
@@ -316,10 +317,9 @@ for store1 in range(11):
 # Question 6
 n_episodes = 1000000
 len_episode = 75
-epsilon = 0.05
-alpha = 0.01
+alpha = 0.2
 
-def tabular_Q_learning_modified(n_episodes: int, len_episode: int, epsilon: float, alpha: float) -> np.ndarray:
+def tabular_Q_learning_modified(n_episodes: int, len_episode: int, alpha_base: float) -> np.ndarray:
     # initialize the Q function
     Q = np.zeros((21, 11, 21, 11))
 
@@ -332,6 +332,12 @@ def tabular_Q_learning_modified(n_episodes: int, len_episode: int, epsilon: floa
     for iteration in range(n_episodes):
         print(f'({iteration}/{n_episodes})')
 
+        # adjust the learning rate according to number of episodes already run
+        if iteration <= n_episodes / 3:
+            alpha = alpha_base
+        else:
+            alpha = alpha_base / math.log(iteration + 3)
+
         # start with random initial inventory to observe all states
         cluster1 = np.random.randint(0, 21)
         cluster2 = np.random.randint(0, 11)
@@ -339,8 +345,9 @@ def tabular_Q_learning_modified(n_episodes: int, len_episode: int, epsilon: floa
         # run the episode
         for _ in range(len_episode):
 
-            # take action according to epsilon greedy
-            if np.random.uniform(0, 1) < epsilon:
+            # take action according to epsilon greedy (make greedy action at the start -
+            # less in the end when already seen a lot of states)
+            if np.random.uniform(0, 1) < (1 - (iteration / n_episodes)):
                 action1 = np.random.randint(0, 21)
                 action2 = np.random.randint(0, 11)
             else:
@@ -376,7 +383,7 @@ def tabular_Q_learning_modified(n_episodes: int, len_episode: int, epsilon: floa
     # return the Q function
     return Q
 
-Q = tabular_Q_learning_modified(n_episodes, len_episode, epsilon, alpha)
+Q = tabular_Q_learning_modified(n_episodes, len_episode, alpha)
 
 # obtain the optimal policy and the corresponding value function
 # determined by the outcome of the Q function of the Q learning algorithm modified
