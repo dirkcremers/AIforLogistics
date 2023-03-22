@@ -1,13 +1,10 @@
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
 import gym
 from gym import spaces
 import numpy as np
 import hygese as hgs
 import geopy.distance
+
+from dirp.genetic_algorithm import GeneticAlgorithm
 
 
 class AI4LEnvironment(gym.Env):
@@ -159,7 +156,7 @@ class AI4LEnvironment(gym.Env):
 
     def calcDirectReward(self, action):
 
-        self.data['demands'] = self.orderUpTo - self.inventories
+        self.data['demands'] = (self.orderUpTo - self.inventories) * action
 
         # modify the problem such that the routing cost for all the
         # stores are only used for the stores which are getting replenished
@@ -179,43 +176,27 @@ class AI4LEnvironment(gym.Env):
 
         result = hgs_solver.solve_cvrp(data_vrp)
 
-        print(result.cost)
-        print(result.routes)
-
-
-
-
-        ## we need to run the hygese to find the routing cost between all actions
-        ## as in this example we always visit each store
-        ## also note that it is rather naive and stupid what we do here.
-        ## however, demand may differ on each visits resulting in different routes
-
-        # print("Calculating the shipment cost of shipping: ")
-        # print(self.data['demands'])
-        # print(self.orderUpTo)
-
-        # Solver initialization
-        ap = hgs.AlgorithmParameters(timeLimit=0.1)  # seconds
-        hgs_solver = hgs.Solver(parameters=ap, verbose=False)
-
-        result = hgs_solver.solve_cvrp(self.data)
-
-        # print("Cost equals: ", result.cost)
         return -1 * result.cost
+    def generate_demand(self):
+        # generate random demand
+        demands = np.zeros(self.nStores)
+
+        for i in range(0, self.nStores):
+            demands[i] = int(max(0, np.random.normal(self.demandMean[i], self.demandStdev[i])))
+
+        return demands
 
     def step(self, action):
         # Execute one time step within the environment
 
         reward = self.calcDirectReward(action)
 
-        self._take_action(action)
+        self._take_action()
         self.current_step += 1
 
-        # generate random demand
-        demands = np.zeros(self.nStores)
+        demands = self.generate_demand()
 
         for i in range(0, self.nStores):
-            demands[i] = int(max(0, np.random.normal(self.demandMean[i], self.demandStdev[i])))
             self.inventories[i] -= demands[i]
             reward -= max(0, self.inventories[i]) * self.c_holding + -1 * min(0, self.inventories[i]) * self.c_lost
 
@@ -230,10 +211,10 @@ class AI4LEnvironment(gym.Env):
 
         return obs, reward, done, {}
 
-    def _take_action(self, action):
+    def _take_action(self):
 
         # in this example it is rather simple; the inventory is shipped
-        self.inventories = self.orderUpTo.copy()
+        self.inventories = self.inventories + self.data['demands']
 
     def reset(self):
         # Reset the state of the environment to an initial state
@@ -251,11 +232,4 @@ class AI4LEnvironment(gym.Env):
 
     def render(self, mode='human', close=False):
         print("No rendering implemented")
-
-
-
-# create the environment
-env = AI4LEnvironment()
-step = env.step(action=[1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
-
 
