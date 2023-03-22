@@ -10,6 +10,7 @@ class GeneticAlgorithm:
 
         self.env = env
 
+        self.demand = None
         self.inventory = self.env.inventories.copy()
 
     def run(self):
@@ -21,7 +22,6 @@ class GeneticAlgorithm:
 
         # create matrix for each sample of demand and given action
         action_sample_matrix = np.zeros((n_samples, self.env.nStores+1))
-
 
         for demand_sample in range(n_samples):
             self.demand = self.env.generate_demand()
@@ -43,7 +43,6 @@ class GeneticAlgorithm:
             model.run()
             action, cost = model.output_dict['variable'], model.output_dict['function']
             action_sample_matrix[demand_sample, :] = action
-
 
         action = self.__consensus(action_sample_matrix)
         print('optimal action: ', action)
@@ -125,6 +124,8 @@ class GeneticAlgorithm:
 
 
     def __consensus(self, action_sample_matrix):
+
+        action = None
 
         kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
         centriod = kmeans.cluster_centers_[0]
