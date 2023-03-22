@@ -6,12 +6,17 @@ env = AI4LEnvironment()
 
 # reset the environment
 env.reset()
+iteration = 0
 done = False
 
 while done == False:
+    print('\n', iteration, '------------------------------------')
     gen = GeneticAlgorithm(env)
     solution, cost = gen.run()
 
     # take the action
     obs, reward, done, info = env.step(solution)
-    print(obs, reward, done, info)
+    print('inventory: ', obs)
+    print('reward: ', reward)
+    print('average cost: ', env.avgCost)
+    iteration += 1

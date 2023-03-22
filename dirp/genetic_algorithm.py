@@ -20,7 +20,16 @@ class GeneticAlgorithm:
         model = ga(function=self.__cost_function,
                    dimension=self.env.nStores+1,
                    variable_type='int',
-                   variable_boundaries=var_bound)
+                   variable_boundaries=var_bound,
+                   algorithm_parameters={'max_num_iteration': 100,
+                                    'population_size': 100,
+                                    'mutation_probability': 0.1,
+                                    'elit_ratio': 0.01,
+                                    'crossover_probability': 0.5,
+                                    'parents_portion': 0.3,
+                                    'crossover_type': 'uniform',
+                                    'max_iteration_without_improv': None}
+                   )
 
         model.run()
         return model.output_dict['variable'], model.output_dict['function']
