@@ -126,7 +126,7 @@ class GeneticAlgorithm:
 
     def __consensus(self, action_sample_matrix):
 
-        kmeans = KMeans(n_clusters=1, random_state=0).fit(action_sample_matrix)
+        kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
         centriod = kmeans.cluster_centers_[0]
         # action = np.round(centriod)
 
