@@ -179,9 +179,9 @@ class AI4LEnvironment(gym.Env):
         return -1 * result.cost
     def generate_demand(self):
         # generate random demand
-        demands = np.zeros(self.nStores)
+        demands = np.zeros(self.nStores+1)
 
-        for i in range(0, self.nStores):
+        for i in range(1, self.nStores+1):
             demands[i] = int(max(0, np.random.normal(self.demandMean[i], self.demandStdev[i])))
 
         return demands

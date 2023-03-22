@@ -12,7 +12,7 @@ done = False
 while done == False:
     print('\n', iteration, '------------------------------------')
     gen = GeneticAlgorithm(env)
-    solution, cost = gen.run()
+    solution = gen.run()
 
     # take the action
     obs, reward, done, info = env.step(solution)
