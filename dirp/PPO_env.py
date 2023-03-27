@@ -3,6 +3,8 @@ from gym import spaces
 import numpy as np
 import geopy.distance
 from stable_baselines3 import PPO
+import pandas as pd
+import xlsxwriter
 
 class PPO_env(gym.Env):
     """Joint Replenishment Environment for OpenAI gym"""
@@ -232,3 +234,5 @@ class PPO_env(gym.Env):
 env = PPO_env()
 model = PPO('MlpPolicy', env, verbose=1)
 model.learn(timesteps=100000)
+model.save("ppo_truck")
+
