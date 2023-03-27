@@ -98,7 +98,7 @@ class GeneticAlgorithm:
         # print('True solution: ', result.cost)
 
 
-        # Hueristic approach to determine cost of transportation
+        # Heuristic approach to determine cost of transportation
 
         # Optimal routing for the given problem (visiting every store | one truck)
         full_route = [0, 11, 12, 13, 14, 10, 9, 18, 19, 16, 17, 15, 7, 8, 6, 4, 5, 3, 2, 1, 0]
