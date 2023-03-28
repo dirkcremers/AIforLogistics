@@ -275,7 +275,7 @@ while done == False:
 
     # save results
     df = df.append(
-        {'iteration': iteration, 'inventory': obs_old, 'action': action, 'reward': reward, 'avgCost': env.avgCost,
+        {'iteration': iteration, 'inventory': obs_old, 'action': action, 'reward': reward, 'avgCost': env_test.avgCost,
          'HoldCost': info['HoldingCost'], 'LostCost': info['LostCost'], 'RoutingCost': info['TransportationCost']},
         ignore_index=True)
 
