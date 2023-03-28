@@ -1,3 +1,5 @@
+import numpy as np
+
 from dirp.AI4LEnvironment import AI4LEnvironment
 from dirp.genetic_algorithm import GeneticAlgorithm
 
@@ -5,18 +7,28 @@ from dirp.genetic_algorithm import GeneticAlgorithm
 env = AI4LEnvironment()
 
 # reset the environment
-env.reset()
+obs = env.reset()
 iteration = 0
 done = False
 
 while done == False:
     print('\n', iteration, '------------------------------------')
+
+    # create the genetic algorithm
     gen = GeneticAlgorithm(env)
-    solution = gen.run()
+    action = gen.run()
+
+    # SS policy
+    # action = np.less_equal(obs, env.s).astype(int)
+    # action[0] = 1
+    # print(action)
 
     # take the action
-    obs, reward, done, info = env.step(solution)
+    obs, reward, done, info = env.step(action)
     print('inventory: ', obs)
     print('reward: ', reward)
     print('average cost: ', env.avgCost)
+
+
+
     iteration += 1

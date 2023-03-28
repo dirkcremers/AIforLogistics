@@ -122,7 +122,9 @@ class AI4LEnvironment(gym.Env):
         self.demandStdev = np.ceil(np.random.rand(self.nStores + 1) * 0.5 * self.demandMean)
 
         # create some fixed order up to levels
-        self.orderUpTo = np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
+        self.s = np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
+
+        self.orderUpTo = 2 * self.s
 
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
@@ -155,6 +157,9 @@ class AI4LEnvironment(gym.Env):
                                             dtype=np.int32)
 
     def calcDirectReward(self, action):
+
+        if np.sum(action[1:]) == 0:
+            return 0
 
         self.data['demands'] = (self.orderUpTo - self.inventories) * action
 
@@ -196,7 +201,7 @@ class AI4LEnvironment(gym.Env):
 
         demands = self.generate_demand()
 
-        for i in range(0, self.nStores):
+        for i in range(0, self.nStores+1):
             self.inventories[i] -= demands[i]
             reward -= max(0, self.inventories[i]) * self.c_holding + -1 * min(0, self.inventories[i]) * self.c_lost
 
