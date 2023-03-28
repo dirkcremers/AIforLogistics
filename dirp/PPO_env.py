@@ -236,7 +236,7 @@ class PPO_env(gym.Env):
 
 env = PPO_env()
 model = PPO('MlpPolicy', env, verbose=0)
-model.learn(total_timesteps=60000, progress_bar=True)
+model.learn(total_timesteps=2000000, progress_bar=True)
 model.save("ppo_truck")
 
 del model
