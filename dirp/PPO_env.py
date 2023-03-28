@@ -244,26 +244,27 @@ model.learn(total_timesteps=60000)
 model.save("ppo_truck")
 
 del model
-model = PPO.load("ppo_truck")
-
-
-# create the environment
-env_test = AI4LEnvironment()
-
-# reset the environment
-obs = env_test.reset()
-iteration = 0
-done = False
-
-while done == False:
-    print('\n', iteration, '------------------------------------')
-    action, _states = model.predict(obs, deterministic=True)
-    action[0] = 1
-
-    # take the action
-    obs, reward, done, info = env_test.step(action)
-    print('inventory: ', obs)
-    print('reward: ', reward)
-    print('average cost: ', env_test.avgCost)
-    iteration += 1
+env.close()
+# model = PPO.load("ppo_truck")
+#
+#
+# # create the environment
+# env_test = AI4LEnvironment()
+#
+# # reset the environment
+# obs = env_test.reset()
+# iteration = 0
+# done = False
+#
+# while done == False:
+#     print('\n', iteration, '------------------------------------')
+#     action, _states = model.predict(obs, deterministic=True)
+#     action[0] = 1
+#
+#     # take the action
+#     obs, reward, done, info = env_test.step(action)
+#     print('inventory: ', obs)
+#     print('reward: ', reward)
+#     print('average cost: ', env_test.avgCost)
+#     iteration += 1
 

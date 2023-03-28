@@ -4,9 +4,6 @@ import numpy as np
 import hygese as hgs
 import geopy.distance
 
-from dirp.genetic_algorithm import GeneticAlgorithm
-
-
 class AI4LEnvironment(gym.Env):
     """Joint Replenishment Environment for OpenAI gym"""
     metadata = {'render.modes': ['human']}
@@ -131,6 +128,9 @@ class AI4LEnvironment(gym.Env):
         self.action = np.zeros(self.nStores + 1)
         self.cost = 0
         self.avgCost = 0
+        self.avgHoldingCost = 0
+        self.avgLostCost = 0
+        self.avgTransportCost = 0
 
         # OPEN AI GYM elements that need to be set
         # this should indicate between which values the rewards could fluctuate
@@ -157,11 +157,10 @@ class AI4LEnvironment(gym.Env):
                                             dtype=np.int32)
 
     def calcDirectReward(self, action):
+        self.data['demands'] = (self.orderUpTo - self.inventories) * action
 
         if np.sum(action[1:]) == 0:
             return 0
-
-        self.data['demands'] = (self.orderUpTo - self.inventories) * action
 
         # modify the problem such that the routing cost for all the
         # stores are only used for the stores which are getting replenished
