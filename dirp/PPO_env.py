@@ -1,8 +1,11 @@
 import gym
+import pandas as pd
 from gym import spaces
 import numpy as np
 import geopy.distance
 from stable_baselines3 import PPO
+
+from dirp.AI4LEnvironment import AI4LEnvironment
 
 
 class PPO_env(gym.Env):
@@ -236,31 +239,45 @@ class PPO_env(gym.Env):
 
 env = PPO_env()
 model = PPO('MlpPolicy', env, verbose=0)
-model.learn(total_timesteps=2000000, progress_bar=True)
+model.learn(total_timesteps=2000000)
 model.save("ppo_truck")
 
 del model
 env.close()
-# model = PPO.load("ppo_truck")
-#
-#
-# # create the environment
-# env_test = AI4LEnvironment()
-#
-# # reset the environment
-# obs = env_test.reset()
-# iteration = 0
-# done = False
-#
-# while done == False:
-#     print('\n', iteration, '------------------------------------')
-#     action, _states = model.predict(obs, deterministic=True)
-#     action[0] = 1
-#
-#     # take the action
-#     obs, reward, done, info = env_test.step(action)
-#     print('inventory: ', obs)
-#     print('reward: ', reward)
-#     print('average cost: ', env_test.avgCost)
-#     iteration += 1
+model = PPO.load("ppo_truck")
+
+
+# create the environment
+env_test = AI4LEnvironment()
+
+df = pd.DataFrame(columns=['iteration', 'inventory', 'action', 'reward', 'avgCost', 'HoldCost', 'LostCost', 'RoutingCost'])
+
+# reset the environment
+obs = env_test.reset()
+iteration = 0
+done = False
+
+while done == False:
+
+    # copy inventory before demand and action are taken
+    obs_old = obs.copy()
+
+    print('\n', iteration, '------------------------------------')
+    action, _states = model.predict(obs, deterministic=True)
+    action[0] = 1
+
+    # take the action
+    obs, reward, done, info = env_test.step(action)
+    print('inventory: ', obs)
+    print('reward: ', reward)
+    print('average cost: ', env_test.avgCost)
+    iteration += 1
+
+    # save results
+    df = df.append(
+        {'iteration': iteration, 'inventory': obs_old, 'action': action, 'reward': reward, 'avgCost': env.avgCost,
+         'HoldCost': info['HoldingCost'], 'LostCost': info['LostCost'], 'RoutingCost': info['TransportationCost']},
+        ignore_index=True)
+
+df.to_csv('results_ppo.csv', index=False)
 
