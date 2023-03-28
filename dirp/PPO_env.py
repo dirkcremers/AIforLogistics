@@ -6,6 +6,9 @@ from stable_baselines3 import PPO
 import pandas as pd
 import xlsxwriter
 
+from dirp.AI4LEnvironment import AI4LEnvironment
+
+
 class PPO_env(gym.Env):
     """Joint Replenishment Environment for OpenAI gym"""
     metadata = {'render.modes': ['human']}
@@ -91,7 +94,7 @@ class PPO_env(gym.Env):
         # the current amount of inventory in each store
         self.inventories = np.zeros(self.nStores + 1)
 
-        print("Inventory size upon constr: ", len(self.inventories))
+        # print("Inventory size upon constr: ", len(self.inventories))
 
         # information on the demand distribution
         # small, medium or large stores: 4, 10, 25 shape par.
@@ -159,16 +162,20 @@ class PPO_env(gym.Env):
 
     def __routing_cost(self, action):
 
+        # fix depot to be always visited
+        routing_action = action.copy()
+        routing_action[0] = 1
+
         # Heuristic approach to determine cost of transportation
 
         # Optimal routing for the given problem (visiting every store | one truck)
         full_route = [0, 11, 12, 13, 14, 10, 9, 18, 19, 16, 17, 15, 7, 8, 6, 4, 5, 3, 2, 1, 0]
 
         # Order amounts which are delivered by the trucks
-        orders = (self.orderUpTo - self.inventories) * action
+        orders = (self.orderUpTo - self.inventories) * routing_action
 
         # Indexes of alle stores which are not visited by our action
-        stores_not_visited = [i for i, x in enumerate(action) if x == 0]
+        stores_not_visited = [i for i, x in enumerate(routing_action) if x == 0]
 
         # Obtain approximation route by removing all stores which are not visited
         current_route = [x for x in full_route if x not in stores_not_visited]
@@ -233,6 +240,30 @@ class PPO_env(gym.Env):
 
 env = PPO_env()
 model = PPO('MlpPolicy', env, verbose=1)
-model.learn(timesteps=100000)
+model.learn(total_timesteps=60000)
 model.save("ppo_truck")
+
+del model
+model = PPO.load("ppo_truck")
+
+
+# create the environment
+env_test = AI4LEnvironment()
+
+# reset the environment
+obs = env_test.reset()
+iteration = 0
+done = False
+
+while done == False:
+    print('\n', iteration, '------------------------------------')
+    action, _states = model.predict(obs, deterministic=True)
+    action[0] = 1
+
+    # take the action
+    obs, reward, done, info = env_test.step(action)
+    print('inventory: ', obs)
+    print('reward: ', reward)
+    print('average cost: ', env_test.avgCost)
+    iteration += 1
 
