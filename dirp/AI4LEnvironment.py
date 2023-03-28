@@ -189,11 +189,15 @@ class AI4LEnvironment(gym.Env):
     def step(self, action):
         # Execute one time step within the environment
 
+        print("Action: ", action)
+        print("Start routing cost")
+
         reward = self.calcDirectReward(action)
 
         self._take_action()
         self.current_step += 1
 
+        print("Start holding cost / lost sales cost")
         demands = self.generate_demand()
 
         for i in range(0, self.nStores):
