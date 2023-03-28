@@ -126,10 +126,17 @@ class AI4LEnvironment(gym.Env):
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
         self.action = np.zeros(self.nStores + 1)
+
         self.cost = 0
         self.avgCost = 0
+
+        self.holdingCost = 0
         self.avgHoldingCost = 0
+
+        self.lostCost = 0
         self.avgLostCost = 0
+
+        self.transportCost = 0
         self.avgTransportCost = 0
 
         # OPEN AI GYM elements that need to be set
@@ -192,32 +199,43 @@ class AI4LEnvironment(gym.Env):
 
     def step(self, action):
         # Execute one time step within the environment
+        self.current_step += 1
 
         print("Action: ", action)
         print("Start routing cost")
 
-        reward = self.calcDirectReward(action)
+        transportation_cost = self.calcDirectReward(action)
 
         self._take_action()
-        self.current_step += 1
 
         print("Start holding cost / lost sales cost")
         demands = self.generate_demand()
 
+        holding_cost = 0
+        lost_cost = 0
+
         for i in range(0, self.nStores+1):
             self.inventories[i] -= demands[i]
-            reward -= max(0, self.inventories[i]) * self.c_holding + -1 * min(0, self.inventories[i]) * self.c_lost
+
+            # holding cost
+            holding_cost -= max(0, self.inventories[i]) * self.c_holding
+
+            # lost sales cost
+            lost_cost -= -1 * min(0, self.inventories[i]) * self.c_lost
 
             self.inventories[i] = max(0, self.inventories[i])
 
-        self.cost += reward
+        total_cost = transportation_cost + holding_cost + lost_cost
+        self.cost += total_cost
         self.avgCost = self.cost / self.current_step
 
-        done = self.current_step >= 2000
+        done = self.current_step >= 10
 
         obs = self._next_observation()
 
-        return obs, reward, done, {}
+        return obs, total_cost, done, {'TransportationCost': transportation_cost,
+                                       'HoldingCost': holding_cost,
+                                       'LostCost': lost_cost}
 
     def _take_action(self):
 

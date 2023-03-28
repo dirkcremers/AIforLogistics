@@ -3,10 +3,6 @@ from gym import spaces
 import numpy as np
 import geopy.distance
 from stable_baselines3 import PPO
-import pandas as pd
-import xlsxwriter
-
-from dirp.AI4LEnvironment import AI4LEnvironment
 
 
 class PPO_env(gym.Env):
@@ -124,7 +120,7 @@ class PPO_env(gym.Env):
         self.demandStdev = np.ceil(np.random.rand(self.nStores + 1) * 0.5 * self.demandMean)
 
         # create some fixed order up to levels
-        self.orderUpTo = np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
+        self.orderUpTo = 2 * np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
 
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
@@ -239,8 +235,8 @@ class PPO_env(gym.Env):
         print("No rendering implemented")
 
 env = PPO_env()
-model = PPO('MlpPolicy', env, verbose=1)
-model.learn(total_timesteps=60000)
+model = PPO('MlpPolicy', env, verbose=0)
+model.learn(total_timesteps=60000, progress_bar=True)
 model.save("ppo_truck")
 
 del model
