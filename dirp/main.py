@@ -24,9 +24,8 @@ def run_simulation(policy: str) -> None:
 
         # SS policy
         if policy == 'SS':
-            # action = np.less_equal(obs, env.s).astype(int)
-            # action[0] = 1
-            # print(action)
+            action = np.less_equal(obs, env.s).astype(int)
+            action[0] = 1
 
         # Genetic Algorithm policy
         if policy == 'GA':
