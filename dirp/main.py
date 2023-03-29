@@ -41,7 +41,7 @@ def run_simulation(policy: str) -> None:
                 env_PPO = PPO_env()
                 # env = make_vec_env('PPO-v0', n_envs=4)
                 model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=0)
-                model.learn(total_timesteps=60000)
+                model.learn(total_timesteps=4000000)
                 model.save("ppo_dirp")
             action, _states = model.predict(obs, deterministic=False)
             # ensure depot is always open
