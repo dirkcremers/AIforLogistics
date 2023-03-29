@@ -31,6 +31,7 @@ def run_simulation(policy: str) -> None:
         # Genetic Algorithm policy
         if policy == 'GA':
             gen = GeneticAlgorithm(env)
+            action[0] = 1
             action = gen.run()
 
         # PPO policy
@@ -43,6 +44,8 @@ def run_simulation(policy: str) -> None:
                 model.learn(total_timesteps=60000)
                 model.save("ppo_dirp")
             action, _states = model.predict(obs, deterministic=False)
+            # ensure depot is always open
+            action[0] = 1
 
         # copy inventory before demand and action are taken
         obs_old = obs.copy()
