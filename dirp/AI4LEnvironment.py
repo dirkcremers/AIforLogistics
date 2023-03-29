@@ -164,10 +164,20 @@ class AI4LEnvironment(gym.Env):
                                             dtype=np.int32)
 
     def calcDirectReward(self, action):
+        action = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+
         self.data['demands'] = (self.orderUpTo - self.inventories) * action
 
         if np.sum(action[1:]) == 0:
             return 0
+
+        if np.sum(action[1:]) == 1:
+            store_index = np.where(np.array(action) == 1)[0][1]
+
+            no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
+            routing_cost = self.data['distance_matrix'][0][store_index] + self.data['distance_matrix'][store_index][0]
+
+            return -1 * (routing_cost * no_trucks)
 
         # modify the problem such that the routing cost for all the
         # stores are only used for the stores which are getting replenished

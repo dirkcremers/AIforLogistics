@@ -15,7 +15,7 @@ class GeneticAlgorithm:
 
     def run(self):
 
-        n_samples = 50
+        n_samples = 1
 
         var_bound = np.array([[0, 1]] * (self.env.nStores + 1))
         var_bound[0, 0] = 1
