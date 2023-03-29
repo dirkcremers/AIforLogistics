@@ -52,14 +52,14 @@ class GeneticAlgorithm:
 
     def __cost_function(self, action):
 
-        print('Action: ', action)
+        # print('Action: ', action)
 
         # Create copies of the inventory and demand
         inventory = self.inventory.copy()
         demand = self.demand.copy()
 
-        print('Inventory: ', inventory)
-        print('Demand: ', demand)
+        # print('Inventory: ', inventory)
+        # print('Demand: ', demand)
 
         # TODO: do we need to choose action outside of the simulation part
         cost = 0
@@ -67,12 +67,12 @@ class GeneticAlgorithm:
         # routing cost
         # TODO: check how we want to implement this
         cost += self.__routing_cost(action)
-        print('Routing cost: ', cost)
+        # print('Routing cost: ', cost)
 
         # add inventory which is deliverd based by the action
         inventory = inventory + np.where((self.env.orderUpTo * action - inventory) < 0, 0, (self.env.orderUpTo * action - inventory))
 
-        print('Inventory after delivery: ', inventory)
+        # print('Inventory after delivery: ', inventory)
 
         # calculate holding cost and lost sales cost
         for i in range(0, self.env.nStores + 1):
@@ -135,23 +135,23 @@ class GeneticAlgorithm:
     def __consensus(self, action_sample_matrix):
 
         # Option 1
-        # action = np.mean(action_sample_matrix, axis=0)
-        # # set all values to 0 or 1 based on value being greater or smaller than 0.3
-        # action = np.where(action > 0.3, 1, 0)
+        action = np.mean(action_sample_matrix, axis=0) + 0.2
+        # set all values to 0 or 1 based on value being greater or smaller than 0.3
+        action = np.round(action)
 
 
         # Option 2
-        action = None
-
-        kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
-        centriod = kmeans.cluster_centers_[0]
-        # action = np.round(centriod)
-
-        min_distance = np.inf
-        for i in range(0, action_sample_matrix.shape[0]):
-            distance = np.linalg.norm(action_sample_matrix[i, :] - centriod)
-            if distance < min_distance:
-                min_distance = distance
-                action = action_sample_matrix[i, :]
+        # action = None
+        #
+        # kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
+        # centriod = kmeans.cluster_centers_[0]
+        # # action = np.round(centriod)
+        #
+        # min_distance = np.inf
+        # for i in range(0, action_sample_matrix.shape[0]):
+        #     distance = np.linalg.norm(action_sample_matrix[i, :] - centriod)
+        #     if distance < min_distance:
+        #         min_distance = distance
+        #         action = action_sample_matrix[i, :]
 
         return action
