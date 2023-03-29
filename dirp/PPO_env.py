@@ -124,7 +124,7 @@ class PPO_env(gym.Env):
         self.demandStdev = np.ceil(np.random.rand(self.nStores + 1) * 0.5 * self.demandMean)
 
         # create some fixed order up to levels
-        self.orderUpTo = 2 * np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
+        self.orderUpTo = np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
 
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
@@ -147,7 +147,7 @@ class PPO_env(gym.Env):
         # a store.
 
         # how many stores we will replenish to base stock?
-        self.action_space = spaces.MultiBinary(self.nStores + 1)
+        self.action_space = spaces.MultiDiscrete([4] * (self.nStores + 1))
 
         # observation space is simply the inventory levels at each store at the
         # start of the day
@@ -172,7 +172,7 @@ class PPO_env(gym.Env):
         full_route = [0, 11, 12, 13, 14, 10, 9, 18, 19, 16, 17, 15, 7, 8, 6, 4, 5, 3, 2, 1, 0]
 
         # Order amounts which are delivered by the trucks
-        orders = (self.orderUpTo - self.inventories) * routing_action
+        orders = np.where(self.orderUpTo * routing_action - self.inventories < 0, 0, self.orderUpTo * routing_action - self.inventories)
 
         # Indexes of alle stores which are not visited by our action
         stores_not_visited = [i for i, x in enumerate(routing_action) if x == 0]
@@ -208,7 +208,7 @@ class PPO_env(gym.Env):
         reward = self.__routing_cost(action)
 
         # add inventory which is deliverd based by the action
-        self.inventories = self.inventories + (self.orderUpTo - self.inventories) * action - demand
+        self.inventories = self.inventories + np.where(self.orderUpTo * action - self.inventories < 0, 0, self.orderUpTo * action - self.inventories) - demand
 
         # calculate holding cost and lost sales cost
         for i in range(0, self.nStores + 1):
