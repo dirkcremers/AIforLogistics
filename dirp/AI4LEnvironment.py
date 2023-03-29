@@ -238,7 +238,7 @@ class AI4LEnvironment(gym.Env):
         self.cost += total_cost
         self.avgCost = self.cost / self.current_step
 
-        done = self.current_step >= 20
+        done = self.current_step >= 372
 
         obs = self._next_observation()
 

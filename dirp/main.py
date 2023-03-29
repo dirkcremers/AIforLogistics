@@ -61,6 +61,6 @@ def run_simulation(policy: str) -> None:
 
 
 if __name__ == '__main__':
-    # run_simulation('SS')
-    # run_simulation('GA')
+    run_simulation('SS')
+    run_simulation('GA')
     run_simulation('PPO')

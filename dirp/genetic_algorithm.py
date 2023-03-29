@@ -127,9 +127,9 @@ class GeneticAlgorithm:
     def __consensus(self, action_sample_matrix):
 
         # Option 1
-        action = np.mean(action_sample_matrix, axis=0)
+        action = np.mean(action_sample_matrix, axis=0) + 0.2
         # set all values to 0 or 1 based on value being greater or smaller than 0.3
-        action = np.where(action > 0.3, 1, 0)
+        action = np.round(action)
 
 
         # Option 2
