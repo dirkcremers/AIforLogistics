@@ -4,6 +4,7 @@ from stable_baselines3 import PPO
 
 from dirp.AI4LEnvironment import AI4LEnvironment
 from dirp.PPO_env import PPO_env
+from dirp.PPO_util import linear_schedule
 from dirp.genetic_algorithm import GeneticAlgorithm
 
 
@@ -38,7 +39,7 @@ def run_simulation(policy: str) -> None:
             if iteration == 0:
                 env_PPO = PPO_env()
                 # env = make_vec_env('PPO-v0', n_envs=4)
-                model = PPO('MlpPolicy', env_PPO, learning_rate=0.001, verbose=0)
+                model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=0)
                 model.learn(total_timesteps=60000)
                 model.save("ppo_dirp")
             action, _states = model.predict(obs, deterministic=False)
