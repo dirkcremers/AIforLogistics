@@ -121,7 +121,7 @@ class AI4LEnvironment(gym.Env):
         # create some fixed order up to levels
         self.s = np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
 
-        self.orderUpTo = 2 * self.s
+        self.orderUpTo = self.s
 
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
@@ -139,22 +139,10 @@ class AI4LEnvironment(gym.Env):
         self.transportCost = 0
         self.avgTransportCost = 0
 
-        # OPEN AI GYM elements that need to be set
-        # this should indicate between which values the rewards could fluctuate
-        # (Your teacher has no real clue what happens with it)
         self.reward_range = (self.nStores * -1 * self.capacity * self.c_lost, 3 * self.capacity * self.c_holding)
 
-        # we need to define the shape of an action
-        # for this example, we set it equal to a simple multibinairy action
-        # space. (series of zeros and ones for ordering or not)
-        # It is quite crucial to understand the spaces objects. Please google!
-
-        # Also note that this action is ignored as we use a base stock
-        # a first step towards implementation could be to ignore visiting 
-        # a store.
-
         # how many stores we will replenish to base stock?
-        self.action_space = spaces.MultiBinary(self.nStores + 1)
+        self.action_space = spaces.MultiDiscrete([4] * (self.nStores + 1))
 
         # observation space is simply the inventory levels at each store at the
         # start of the day
@@ -165,12 +153,12 @@ class AI4LEnvironment(gym.Env):
 
     def calcDirectReward(self, action):
 
-        self.data['demands'] = (self.orderUpTo - self.inventories) * action
+        self.data['demands'] = np.where(self.orderUpTo * action - self.inventories < 0, 0, self.orderUpTo * action - self.inventories)
 
         if np.sum(action[1:]) == 0:
             return 0
 
-        if np.sum(action[1:]) == 1:
+        if np.sum(np.where(action[1:] > 0, 1, 0)) == 1:
             store_index = np.where(np.array(action) == 1)[0][1]
 
             no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
@@ -238,7 +226,7 @@ class AI4LEnvironment(gym.Env):
         self.cost += total_cost
         self.avgCost = self.cost / self.current_step
 
-        done = self.current_step >= 20
+        done = self.current_step >= 50
 
         obs = self._next_observation()
 

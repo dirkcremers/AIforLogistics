@@ -17,7 +17,7 @@ class GeneticAlgorithm:
 
         n_samples = 50
 
-        var_bound = np.array([[0, 1]] * (self.env.nStores + 1))
+        var_bound = np.array([[0, 3]] * (self.env.nStores + 1))
         var_bound[0, 0] = 1
 
         # create matrix for each sample of demand and given action
@@ -52,9 +52,14 @@ class GeneticAlgorithm:
 
     def __cost_function(self, action):
 
+        print('Action: ', action)
+
         # Create copies of the inventory and demand
         inventory = self.inventory.copy()
         demand = self.demand.copy()
+
+        print('Inventory: ', inventory)
+        print('Demand: ', demand)
 
         # TODO: do we need to choose action outside of the simulation part
         cost = 0
@@ -62,9 +67,12 @@ class GeneticAlgorithm:
         # routing cost
         # TODO: check how we want to implement this
         cost += self.__routing_cost(action)
+        print('Routing cost: ', cost)
 
         # add inventory which is deliverd based by the action
-        inventory = inventory + (self.env.orderUpTo - inventory) * action
+        inventory = inventory + np.where((self.env.orderUpTo * action - inventory) < 0, 0, (self.env.orderUpTo * action - inventory))
+
+        print('Inventory after delivery: ', inventory)
 
         # calculate holding cost and lost sales cost
         for i in range(0, self.env.nStores + 1):
@@ -105,7 +113,7 @@ class GeneticAlgorithm:
         full_route = [0, 11, 12, 13, 14, 10, 9, 18, 19, 16, 17, 15, 7, 8, 6, 4, 5, 3, 2, 1, 0]
 
         # Order amounts which are delivered by the trucks
-        orders = (self.env.orderUpTo - self.inventory) * action
+        orders = np.where((self.env.orderUpTo * action - self.inventory) < 0, 0, (self.env.orderUpTo * action - self.inventory))
 
         # Indexes of alle stores which are not visited by our action
         stores_not_visited = [i for i, x in enumerate(action) if x == 0]
@@ -127,23 +135,23 @@ class GeneticAlgorithm:
     def __consensus(self, action_sample_matrix):
 
         # Option 1
-        action = np.mean(action_sample_matrix, axis=0)
-        # set all values to 0 or 1 based on value being greater or smaller than 0.3
-        action = np.where(action > 0.3, 1, 0)
+        # action = np.mean(action_sample_matrix, axis=0)
+        # # set all values to 0 or 1 based on value being greater or smaller than 0.3
+        # action = np.where(action > 0.3, 1, 0)
 
 
         # Option 2
-        # action = None
-        #
-        # kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
-        # centriod = kmeans.cluster_centers_[0]
-        # # action = np.round(centriod)
-        #
-        # min_distance = np.inf
-        # for i in range(0, action_sample_matrix.shape[0]):
-        #     distance = np.linalg.norm(action_sample_matrix[i, :] - centriod)
-        #     if distance < min_distance:
-        #         min_distance = distance
-        #         action = action_sample_matrix[i, :]
+        action = None
+
+        kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
+        centriod = kmeans.cluster_centers_[0]
+        # action = np.round(centriod)
+
+        min_distance = np.inf
+        for i in range(0, action_sample_matrix.shape[0]):
+            distance = np.linalg.norm(action_sample_matrix[i, :] - centriod)
+            if distance < min_distance:
+                min_distance = distance
+                action = action_sample_matrix[i, :]
 
         return action
