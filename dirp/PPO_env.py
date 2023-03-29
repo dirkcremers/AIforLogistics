@@ -4,6 +4,7 @@ from gym import spaces
 import numpy as np
 import geopy.distance
 from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
 
 from dirp.AI4LEnvironment import AI4LEnvironment
 
@@ -238,13 +239,14 @@ class PPO_env(gym.Env):
         print("No rendering implemented")
 
 env = PPO_env()
-model = PPO('MlpPolicy', env, verbose=0)
-model.learn(total_timesteps=2000000)
-model.save("ppo_truck")
+# env = make_vec_env('PPO-v0', n_envs=4)
+model = PPO('MlpPolicy', env, learning_rate=0.001, verbose=0)
+model.learn(total_timesteps=60000)
+model.save("ppo_dirp")
 
-del model
-env.close()
-model = PPO.load("ppo_truck")
+# del model
+# env.close()
+# model = PPO.load("ppo_truck")
 
 
 # create the environment
@@ -263,7 +265,7 @@ while done == False:
     obs_old = obs.copy()
 
     print('\n', iteration, '------------------------------------')
-    action, _states = model.predict(obs, deterministic=True)
+    action, _states = model.predict(obs, deterministic=False)
     action[0] = 1
 
     # take the action
@@ -280,4 +282,3 @@ while done == False:
         ignore_index=True)
 
 df.to_csv('results_ppo.csv', index=False)
-

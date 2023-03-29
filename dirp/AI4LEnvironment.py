@@ -164,7 +164,6 @@ class AI4LEnvironment(gym.Env):
                                             dtype=np.int32)
 
     def calcDirectReward(self, action):
-        action = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
 
         self.data['demands'] = (self.orderUpTo - self.inventories) * action
 
@@ -239,7 +238,7 @@ class AI4LEnvironment(gym.Env):
         self.cost += total_cost
         self.avgCost = self.cost / self.current_step
 
-        done = self.current_step >= 1000
+        done = self.current_step >= 20
 
         obs = self._next_observation()
 

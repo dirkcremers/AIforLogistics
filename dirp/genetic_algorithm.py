@@ -15,7 +15,7 @@ class GeneticAlgorithm:
 
     def run(self):
 
-        n_samples = 1
+        n_samples = 50
 
         var_bound = np.array([[0, 1]] * (self.env.nStores + 1))
         var_bound[0, 0] = 1
@@ -126,17 +126,24 @@ class GeneticAlgorithm:
 
     def __consensus(self, action_sample_matrix):
 
-        action = None
+        # Option 1
+        action = np.mean(action_sample_matrix, axis=0)
+        # set all values to 0 or 1 based on value being greater or smaller than 0.3
+        action = np.where(action > 0.3, 1, 0)
 
-        kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
-        centriod = kmeans.cluster_centers_[0]
-        # action = np.round(centriod)
 
-        min_distance = np.inf
-        for i in range(0, action_sample_matrix.shape[0]):
-            distance = np.linalg.norm(action_sample_matrix[i, :] - centriod)
-            if distance < min_distance:
-                min_distance = distance
-                action = action_sample_matrix[i, :]
+        # Option 2
+        # action = None
+        #
+        # kmeans = KMeans(n_init=10, n_clusters=1, random_state=0).fit(action_sample_matrix)
+        # centriod = kmeans.cluster_centers_[0]
+        # # action = np.round(centriod)
+        #
+        # min_distance = np.inf
+        # for i in range(0, action_sample_matrix.shape[0]):
+        #     distance = np.linalg.norm(action_sample_matrix[i, :] - centriod)
+        #     if distance < min_distance:
+        #         min_distance = distance
+        #         action = action_sample_matrix[i, :]
 
         return action
