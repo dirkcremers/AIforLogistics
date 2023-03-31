@@ -58,8 +58,8 @@ class AI4LEnvironment(gym.Env):
                              ])
 
         self.data['distance_matrix'] = np.zeros(shape=[self.nStores + 1, self.nStores + 1])
-        self.transportCost = 2.5
-        self.fixedTransportCost = 20
+        self.transportCost = 2.5 * 2
+        self.fixedTransportCost = 20 * 2
 
         for i in range(0, self.nStores + 1):
             for j in range(0, self.nStores + 1):
