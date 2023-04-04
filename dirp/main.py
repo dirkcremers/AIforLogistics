@@ -68,8 +68,9 @@ def run_simulation(policy: str, settings: dict) -> None:
         iteration += 1
 
     no_actions = settings['action_space']
+    transportation_factor = settings['transport_distance_factor']
 
-    df.to_csv(f'results_{policy}_{no_actions}.csv', index=False)
+    df.to_csv(f'results_{policy}_{no_actions}_{transportation_factor}.csv', index=False)
 
 
 if __name__ == '__main__':
