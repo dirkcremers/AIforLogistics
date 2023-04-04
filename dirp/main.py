@@ -73,6 +73,8 @@ def run_simulation(policy: str, settings: dict) -> None:
 
 
 if __name__ == '__main__':
+
+    # Marnik
     # note that actual actions are: action_space - 1
     settings = {'transport_distance_factor': 1,
                 'transport_fixed_factor': 1,

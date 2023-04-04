@@ -31,7 +31,7 @@ class GeneticAlgorithm:
                        dimension=self.env.nStores + 1,
                        variable_type='int',
                        variable_boundaries=var_bound,
-                       convergence_curve=True,
+                       convergence_curve=False,
                        algorithm_parameters={'max_num_iteration': 25,
                                              'population_size': 50,
                                              'mutation_probability': 0.1,
