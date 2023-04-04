@@ -3,18 +3,18 @@ import pandas as pd
 from stable_baselines3 import PPO
 
 from dirp.AI4LEnvironment import AI4LEnvironment
-from dirp.PPO_env import PPO_env
 from dirp.PPO_util import linear_schedule
 from dirp.genetic_algorithm import GeneticAlgorithm
-import tqdm
 
 
-def run_simulation(policy: str) -> None:
+def run_simulation(policy: str, settings: dict) -> None:
     # create dataframe for saving results
-    df = pd.DataFrame(columns=['iteration', 'inventory', 'action', 'reward', 'avgCost', 'HoldCost', 'LostCost', 'RoutingCost'])
+    df = pd.DataFrame(
+        columns=['iteration', 'inventory', 'action', 'reward', 'avgCost', 'HoldCost', 'LostCost', 'RoutingCost'])
 
     # create the environment
-    env = AI4LEnvironment()
+    settings['routing_approx'] = False
+    env = AI4LEnvironment(settings)
 
     # reset the environment
     obs = env.reset()
@@ -26,7 +26,8 @@ def run_simulation(policy: str) -> None:
 
         # SS policy
         if policy == 'SS':
-            action = np.less_equal(obs, env.s).astype(int)
+            S = env.demandMean + 1.96 * env.demandStdev
+            action = np.less_equal(obs, S).astype(int)
             action[0] = 1
 
         # Genetic Algorithm policy
@@ -38,11 +39,13 @@ def run_simulation(policy: str) -> None:
         # PPO policy
         if policy == 'PPO':
             if iteration == 0:
-                env_PPO = PPO_env()
-                # env = make_vec_env('PPO-v0', n_envs=4)
+                settings['routing_approx'] = True
+                env_PPO = AI4LEnvironment(settings)
+
                 model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=1)
-                model.learn(total_timesteps=4000000)
+                model.learn(total_timesteps=100000)
                 model.save("ppo_dirp")
+
             action, _states = model.predict(obs, deterministic=False)
             # ensure depot is always open
             action[0] = 1
@@ -57,13 +60,24 @@ def run_simulation(policy: str) -> None:
         print('average cost: ', env.avgCost)
 
         # save results
-        df = df.append({'iteration': iteration, 'inventory': obs_old, 'action': action, 'reward': reward, 'avgCost': env.avgCost, 'HoldCost': info['HoldingCost'], 'LostCost': info['LostCost'], 'RoutingCost': info['TransportationCost']}, ignore_index=True)
+        df = df.append(
+            {'iteration': iteration, 'inventory': obs_old, 'action': action, 'reward': reward, 'avgCost': env.avgCost,
+             'HoldCost': info['HoldingCost'], 'LostCost': info['LostCost'], 'RoutingCost': info['TransportationCost']},
+            ignore_index=True)
 
         iteration += 1
 
-    df.to_csv(f'results_{policy}.csv', index=False)
+    no_actions = settings['action_space']
+
+    df.to_csv(f'results_{policy}_{no_actions}.csv', index=False)
 
 
 if __name__ == '__main__':
-    run_simulation('GA')
-    # run_simulation('PPO')
+    # note that actual actions are: action_space - 1
+    settings = {'transport_distance_factor': 1,
+                'transport_fixed_factor': 1,
+                'action_space': 4}
+
+    # run_simulation('SS', settings)
+    # run_simulation('GA', settings)
+    # run_simulation('PPO', settings)

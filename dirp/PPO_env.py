@@ -1,20 +1,15 @@
 import gym
-import pandas as pd
 from gym import spaces
 import numpy as np
 import geopy.distance
-from stable_baselines3 import PPO
-from stable_baselines3.common.env_util import make_vec_env
-
-from dirp.AI4LEnvironment import AI4LEnvironment
-
 
 class PPO_env(gym.Env):
     """Joint Replenishment Environment for OpenAI gym"""
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, settings: dict):
         super().__init__()
+        self.settings = settings
         self.nStores = 19
 
         self.data = dict()
@@ -63,8 +58,10 @@ class PPO_env(gym.Env):
                              ])
 
         self.data['distance_matrix'] = np.zeros(shape=[self.nStores + 1, self.nStores + 1])
-        self.transportCost = 2.5
-        self.fixedTransportCost = 20
+        self.transportCost = 2.5 * self.settings['transport_distance_factor']
+        self.fixedTransportCost = 20 * self.settings['transport_fixed_factor']
+
+        print(self.settings)
 
         for i in range(0, self.nStores + 1):
             for j in range(0, self.nStores + 1):
@@ -75,7 +72,6 @@ class PPO_env(gym.Env):
 
                 if i == 0:
                     self.data['distance_matrix'][i][j] += self.fixedTransportCost
-        self.data['service_times'] = np.zeros(self.nStores + 1)
 
         # the vehicle capacity, the number of vehicles, and depot information
         # this is stored in the 'data' dict to be compatible with hygese solver
@@ -84,6 +80,7 @@ class PPO_env(gym.Env):
         self.data['depot'] = 0
 
         # Information of the stores
+        # TODO: make holding cost compatible with settings dictionary
         self.c_holding = 1
         self.c_lost = 19
         self.capacity = 1000
@@ -93,8 +90,6 @@ class PPO_env(gym.Env):
 
         # the current amount of inventory in each store
         self.inventories = np.zeros(self.nStores + 1)
-
-        # print("Inventory size upon constr: ", len(self.inventories))
 
         # information on the demand distribution
         # small, medium or large stores: 4, 10, 25 shape par.
@@ -121,10 +116,9 @@ class PPO_env(gym.Env):
                                     4])
 
         np.random.seed(1331)
-        self.demandStdev = np.ceil(np.random.rand(self.nStores + 1) * 0.5 * self.demandMean)
 
-        # create some fixed order up to levels
-        self.orderUpTo = np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
+        # Standard deviation
+        self.demandStdev = np.ceil(np.random.rand(self.nStores + 1) * 0.5 * self.demandMean)
 
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
@@ -132,22 +126,10 @@ class PPO_env(gym.Env):
         self.cost = 0
         self.avgCost = 0
 
-        # OPEN AI GYM elements that need to be set
-        # this should indicate between which values the rewards could fluctuate
-        # (Your teacher has no real clue what happens with it)
         self.reward_range = (self.nStores * -1 * self.capacity * self.c_lost, 3 * self.capacity * self.c_holding)
 
-        # we need to define the shape of an action
-        # for this example, we set it equal to a simple multibinairy action
-        # space. (series of zeros and ones for ordering or not)
-        # It is quite crucial to understand the spaces objects. Please google!
-
-        # Also note that this action is ignored as we use a base stock
-        # a first step towards implementation could be to ignore visiting
-        # a store.
-
-        # how many stores we will replenish to base stock?
-        self.action_space = spaces.MultiDiscrete([4] * (self.nStores + 1))
+        # action space
+        self.action_space = spaces.MultiDiscrete([self.settings['action_space']] * (self.nStores + 1))
 
         # observation space is simply the inventory levels at each store at the
         # start of the day
@@ -172,7 +154,9 @@ class PPO_env(gym.Env):
         full_route = [0, 11, 12, 13, 14, 10, 9, 18, 19, 16, 17, 15, 7, 8, 6, 4, 5, 3, 2, 1, 0]
 
         # Order amounts which are delivered by the trucks
-        orders = np.where(self.orderUpTo * routing_action - self.inventories < 0, 0, self.orderUpTo * routing_action - self.inventories)
+        orderUpTo = np.ceil(self.demandMean * routing_action + 1.96 * np.sqrt(self.demandStdev * routing_action))
+
+        orders = np.where(orderUpTo - self.inventories < 0, 0, orderUpTo - self.inventories)
 
         # Indexes of alle stores which are not visited by our action
         stores_not_visited = [i for i, x in enumerate(routing_action) if x == 0]

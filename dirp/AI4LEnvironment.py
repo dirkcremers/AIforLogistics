@@ -8,8 +8,9 @@ class AI4LEnvironment(gym.Env):
     """Joint Replenishment Environment for OpenAI gym"""
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, settings: dict):
         super().__init__()
+        self.settings = settings
         self.nStores = 19
 
         self.data = dict()
@@ -58,8 +59,8 @@ class AI4LEnvironment(gym.Env):
                              ])
 
         self.data['distance_matrix'] = np.zeros(shape=[self.nStores + 1, self.nStores + 1])
-        self.transportCost = 2.5 * 2
-        self.fixedTransportCost = 20 * 2
+        self.transportCost = 2.5 * self.settings['transport_distance_factor']
+        self.fixedTransportCost = 20 * self.settings['transport_fixed_factor']
 
         for i in range(0, self.nStores + 1):
             for j in range(0, self.nStores + 1):
@@ -79,6 +80,7 @@ class AI4LEnvironment(gym.Env):
         self.data['depot'] = 0
 
         # Information of the stores
+        # TODO: make holding cost compatible with settings dictionary
         self.c_holding = 1
         self.c_lost = 19
         self.capacity = 1000
@@ -88,8 +90,6 @@ class AI4LEnvironment(gym.Env):
 
         # the current amount of inventory in each store
         self.inventories = np.zeros(self.nStores + 1)
-
-        print("Inventory size upon constr: ", len(self.inventories))
 
         # information on the demand distribution
         # small, medium or large stores: 4, 10, 25 shape par.
@@ -116,12 +116,9 @@ class AI4LEnvironment(gym.Env):
                                     4])
 
         np.random.seed(1331)
+
+        # Standard deviation
         self.demandStdev = np.ceil(np.random.rand(self.nStores + 1) * 0.5 * self.demandMean)
-
-        # create some fixed order up to levels
-        self.s = np.ceil(self.demandMean + 1.96 * np.sqrt(self.demandStdev))
-
-        self.orderUpTo = self.s
 
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
@@ -141,8 +138,8 @@ class AI4LEnvironment(gym.Env):
 
         self.reward_range = (self.nStores * -1 * self.capacity * self.c_lost, 3 * self.capacity * self.c_holding)
 
-        # how many stores we will replenish to base stock?
-        self.action_space = spaces.MultiDiscrete([4] * (self.nStores + 1))
+        # action space
+        self.action_space = spaces.MultiDiscrete([self.settings['action_space']] * (self.nStores + 1))
 
         # observation space is simply the inventory levels at each store at the
         # start of the day
@@ -151,40 +148,75 @@ class AI4LEnvironment(gym.Env):
                                             shape=(self.nStores + 1,),
                                             dtype=np.int32)
 
-    def calcDirectReward(self, action):
+        # StableBaseLines requires these else gives error if they are not defined
+        self.spec = None
+        self.metadata = None
 
-        self.data['demands'] = np.where(self.orderUpTo * action - self.inventories < 0, 0, self.orderUpTo * action - self.inventories)
+    def __routing_cost(self, action):
 
+        # Fix depot to be always visited
+        action[0] = 1
+        orderUpTo = np.ceil(self.demandMean * action + 1.96 * np.sqrt(action) * self.demandStdev)
+        self.data['demands'] = np.where(orderUpTo - self.inventories > self.maxOrderQuantity, self.maxOrderQuantity, orderUpTo - self.inventories)
+        self.data['demands'] = np.where(orderUpTo >= self.capacity,
+                                        self.capacity - self.inventories, self.data['demands'])
+        self.data['demands'] = np.where(orderUpTo - self.inventories < 0, 0, self.data['demands'])
+
+        # if not trucks need to drive, then cost = 0
         if np.sum(action[1:]) == 0:
             return 0
 
-        if np.sum(np.where(action[1:] > 0, 1, 0)) == 1:
-            store_index = np.where(np.array(action) == 1)[0][1]
+        # Heuristic approach to determine cost of transportation
+        if self.settings['routing_approx']:
 
-            no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
-            routing_cost = self.data['distance_matrix'][0][store_index] + self.data['distance_matrix'][store_index][0]
+            # Optimal routing for the given problem (visiting every store | one truck)
+            full_route = [0, 11, 12, 13, 14, 10, 9, 18, 19, 16, 17, 15, 7, 8, 6, 4, 5, 3, 2, 1, 0]
 
-            return -1 * (routing_cost * no_trucks)
+            # Indexes of alle stores which are not visited by our action
+            stores_not_visited = [i for i, x in enumerate(action) if x == 0]
 
-        # modify the problem such that the routing cost for all the
-        # stores are only used for the stores which are getting replenished
+            # Obtain approximation route by removing all stores which are not visited
+            current_route = [x for x in full_route if x not in stores_not_visited]
+            cost = 0
+            for i in range(0, len(current_route) - 1):
+                cost += self.data['distance_matrix'][current_route[i], current_route[i + 1]]
 
-        data_vrp = self.data.copy()
+            # cost of the amount of trucks necessary
+            cost += self.fixedTransportCost * np.ceil((np.sum(self.data['demands']) / self.data['vehicle_capacity']))
 
-        no_visited_stores = np.where(np.array(action) == 0)[0]
+            # print('Heuristic approach: ', cost)
 
-        data_vrp['distance_matrix'] = np.delete(data_vrp['distance_matrix'], no_visited_stores, axis=0)
-        data_vrp['distance_matrix'] = np.delete(data_vrp['distance_matrix'], no_visited_stores, axis=1)
+            return -1 * cost
 
-        data_vrp['demands'] = np.delete(data_vrp['demands'], no_visited_stores)
-        data_vrp['service_times'] = np.delete(data_vrp['service_times'], no_visited_stores)
+        # Hygese best solution
+        else:
+            if np.sum(np.where(action[1:] > 0, 1, 0)) == 1:
+                store_index = np.where(np.array(action) == 1)[0][1]
 
-        ap = hgs.AlgorithmParameters(timeLimit=0.1)  # seconds
-        hgs_solver = hgs.Solver(parameters=ap, verbose=False)
+                no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
+                routing_cost = self.data['distance_matrix'][0][store_index] + self.data['distance_matrix'][store_index][0]
 
-        result = hgs_solver.solve_cvrp(data_vrp)
+                return -1 * (routing_cost * no_trucks)
 
-        return -1 * result.cost
+            # modify the problem such that the routing cost for all the
+            # stores are only used for the stores which are getting replenished
+            # therefore create copy of the data
+            data_vrp = self.data.copy()
+
+            no_visited_stores = np.where(np.array(action) == 0)[0]
+
+            data_vrp['distance_matrix'] = np.delete(data_vrp['distance_matrix'], no_visited_stores, axis=0)
+            data_vrp['distance_matrix'] = np.delete(data_vrp['distance_matrix'], no_visited_stores, axis=1)
+
+            data_vrp['demands'] = np.delete(data_vrp['demands'], no_visited_stores)
+            data_vrp['service_times'] = np.delete(data_vrp['service_times'], no_visited_stores)
+
+            ap = hgs.AlgorithmParameters(timeLimit=0.1)  # seconds
+            hgs_solver = hgs.Solver(parameters=ap, verbose=False)
+
+            result = hgs_solver.solve_cvrp(data_vrp)
+
+            return -1 * result.cost
     def generate_demand(self):
         # generate random demand
         demands = np.zeros(self.nStores+1)
@@ -198,16 +230,16 @@ class AI4LEnvironment(gym.Env):
         # Execute one time step within the environment
         self.current_step += 1
 
-        print("Action: ", action)
-        print("Start routing cost")
+        # transportation cost
+        transportation_cost = self.__routing_cost(action)
 
-        transportation_cost = self.calcDirectReward(action)
-
+        # update the inventory based on the arriving orders
         self._take_action()
 
-        print("Start holding cost / lost sales cost")
+        # generate demand
         demands = self.generate_demand()
 
+        # keep track of cost
         holding_cost = 0
         lost_cost = 0
 
@@ -246,7 +278,7 @@ class AI4LEnvironment(gym.Env):
         self.current_step = 0
 
         self.cost = 0
-        self.avgCost = 0;
+        self.avgCost = 0
 
         return self._next_observation()
 
