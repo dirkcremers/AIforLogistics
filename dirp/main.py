@@ -32,7 +32,7 @@ def run_simulation(policy: str, settings: dict) -> None:
 
         # Genetic Algorithm policy
         if policy == 'GA':
-            gen = GeneticAlgorithm(env)
+            gen = GeneticAlgorithm(env, settings)
             action = gen.run()
             action[0] = 1
 
@@ -76,8 +76,8 @@ if __name__ == '__main__':
     # note that actual actions are: action_space - 1
     settings = {'transport_distance_factor': 1,
                 'transport_fixed_factor': 1,
-                'action_space': 4}
+                'action_space': 2}
 
     # run_simulation('SS', settings)
-    # run_simulation('GA', settings)
+    run_simulation('GA', settings)
     # run_simulation('PPO', settings)

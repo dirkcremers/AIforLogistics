@@ -6,9 +6,10 @@ from sklearn.cluster import KMeans
 
 
 class GeneticAlgorithm:
-    def __init__(self, env):
+    def __init__(self, env, settings):
 
         self.env = env
+        self.settings = settings
 
         self.demand = None
         self.inventory = self.env.inventories.copy()
@@ -17,7 +18,7 @@ class GeneticAlgorithm:
 
         n_samples = 50
 
-        var_bound = np.array([[0, 3]] * (self.env.nStores + 1))
+        var_bound = np.array([[0, self.settings['action_space'] - 1]] * (self.env.nStores + 1))
         var_bound[0, 0] = 1
 
         # create matrix for each sample of demand and given action
