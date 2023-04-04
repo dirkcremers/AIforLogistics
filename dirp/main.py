@@ -43,7 +43,7 @@ def run_simulation(policy: str, settings: dict) -> None:
                 env_PPO = AI4LEnvironment(settings)
 
                 model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=1)
-                model.learn(total_timesteps=100000)
+                model.learn(total_timesteps=4000000)
                 model.save("ppo_dirp")
 
             action, _states = model.predict(obs, deterministic=False)
@@ -78,6 +78,27 @@ if __name__ == '__main__':
                 'transport_fixed_factor': 1,
                 'action_space': 2}
 
-    # run_simulation('SS', settings)
+    run_simulation('SS', settings)
     run_simulation('GA', settings)
+    run_simulation('PPO', settings)
+
+    # settings = {'transport_distance_factor': 1,
+    #             'transport_fixed_factor': 1,
+    #             'action_space': 4}
+    # run_simulation('GA', settings)
+
+    # settings = {'transport_distance_factor': 1,
+    #             'transport_fixed_factor': 1,
+    #             'action_space': 8}
+    # run_simulation('PPO', settings)
+
+    # settings = {'transport_distance_factor': 5,
+    #             'transport_fixed_factor': 1,
+    #             'action_space': 4}
+    #
+    # run_simulation('GA', settings)
+
+    # settings = {'transport_distance_factor': 5,
+    #             'transport_fixed_factor': 1,
+    #             'action_space': 8}
     # run_simulation('PPO', settings)
