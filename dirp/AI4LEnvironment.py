@@ -162,6 +162,8 @@ class AI4LEnvironment(gym.Env):
                                         self.capacity - self.inventories, self.data['demands'])
         self.data['demands'] = np.where(orderUpTo - self.inventories < 0, 0, self.data['demands'])
 
+        action = np.where(self.data['demands'] > 0, action, 0)
+
         # if not trucks need to drive, then cost = 0
         if np.sum(action[1:]) == 0:
             return 0

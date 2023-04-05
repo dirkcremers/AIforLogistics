@@ -42,9 +42,10 @@ def run_simulation(policy: str, settings: dict) -> None:
                 settings['routing_approx'] = True
                 env_PPO = AI4LEnvironment(settings)
 
-                model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=1)
-                model.learn(total_timesteps=4000000)
+                model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=0)
+                model.learn(total_timesteps=60000)
                 model.save("ppo_dirp")
+                settings['routing_approx'] = False
 
             action, _states = model.predict(obs, deterministic=False)
             # ensure depot is always open
@@ -77,13 +78,13 @@ if __name__ == '__main__':
 
     # Marnik
     # note that actual actions are: action_space - 1
-    settings = {'transport_distance_factor': 1,
-                'transport_fixed_factor': 1,
-                'action_space': 2}
-
-    run_simulation('SS', settings)
-    run_simulation('GA', settings)
-    run_simulation('PPO', settings)
+    # settings = {'transport_distance_factor': 1,
+    #             'transport_fixed_factor': 1,
+    #             'action_space': 2}
+    #
+    # run_simulation('SS', settings)
+    # run_simulation('GA', settings)
+    # run_simulation('PPO', settings)
 
     # settings = {'transport_distance_factor': 1,
     #             'transport_fixed_factor': 1,
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     #
     # run_simulation('GA', settings)
 
-    # settings = {'transport_distance_factor': 5,
-    #             'transport_fixed_factor': 1,
-    #             'action_space': 8}
-    # run_simulation('PPO', settings)
+    settings = {'transport_distance_factor': 5,
+                'transport_fixed_factor': 1,
+                'action_space': 8}
+    run_simulation('PPO', settings)

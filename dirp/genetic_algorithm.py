@@ -66,6 +66,7 @@ class GeneticAlgorithm:
         self.orders = np.where(self.orderUpTo >= self.env.capacity,
                                self.env.capacity - self.inventory, self.orders)
         self.orders = np.where(self.orderUpTo - self.inventory < 0, 0, self.orders)
+        action = np.where(self.orders > 0, action, 0)
 
         cost = 0
 
