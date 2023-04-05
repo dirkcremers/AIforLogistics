@@ -155,7 +155,6 @@ class AI4LEnvironment(gym.Env):
     def __routing_cost(self, action):
 
         # Fix depot to be always visited
-        action[0] = 1
         orderUpTo = np.ceil(self.demandMean * action + 1.96 * np.sqrt(action) * self.demandStdev)
         self.data['demands'] = np.where(orderUpTo - self.inventories > self.maxOrderQuantity, self.maxOrderQuantity, orderUpTo - self.inventories)
         self.data['demands'] = np.where(orderUpTo >= self.capacity,
@@ -163,6 +162,7 @@ class AI4LEnvironment(gym.Env):
         self.data['demands'] = np.where(orderUpTo - self.inventories < 0, 0, self.data['demands'])
 
         action = np.where(self.data['demands'] > 0, action, 0)
+        action[0] = 1
 
         # if not trucks need to drive, then cost = 0
         if np.sum(action[1:]) == 0:
