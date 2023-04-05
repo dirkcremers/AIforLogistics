@@ -161,8 +161,17 @@ class AI4LEnvironment(gym.Env):
                                         self.capacity - self.inventories, self.data['demands'])
         self.data['demands'] = np.where(orderUpTo - self.inventories < 0, 0, self.data['demands'])
 
+        print('action before: ', action)
+        print('orders to be shipped: ', self.data['demands'])
+
         action = np.where(self.data['demands'] > 0, action, 0)
         action[0] = 1
+
+        print('action after adjusting: ', action)
+
+        # for bookkeeping purposes
+        self.action_taken = action
+        self.order_shipped = self.data['demands']
 
         # if not trucks need to drive, then cost = 0
         if np.sum(action[1:]) == 0:
@@ -193,7 +202,7 @@ class AI4LEnvironment(gym.Env):
         # Hygese best solution
         else:
             if np.sum(np.where(action[1:] > 0, 1, 0)) == 1:
-                store_index = np.where(np.array(action) == 1)[0][1]
+                store_index = np.where(np.array(action) > 0)[0][1]
 
                 no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
                 routing_cost = self.data['distance_matrix'][0][store_index] + self.data['distance_matrix'][store_index][0]
@@ -266,7 +275,9 @@ class AI4LEnvironment(gym.Env):
 
         return obs, total_cost, done, {'TransportationCost': transportation_cost,
                                        'HoldingCost': holding_cost,
-                                       'LostCost': lost_cost}
+                                       'LostCost': lost_cost,
+                                       'action': self.action_taken,
+                                       'shipped': self.order_shipped}
 
     def _take_action(self):
 

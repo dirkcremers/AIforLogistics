@@ -10,7 +10,7 @@ from dirp.genetic_algorithm import GeneticAlgorithm
 def run_simulation(policy: str, settings: dict) -> None:
     # create dataframe for saving results
     df = pd.DataFrame(
-        columns=['iteration', 'inventory', 'action', 'reward', 'avgCost', 'HoldCost', 'LostCost', 'RoutingCost'])
+        columns=['iteration', 'inventory', 'action', 'shipped', 'reward', 'avgCost', 'HoldCost', 'LostCost', 'RoutingCost'])
 
     # create the environment
     settings['routing_approx'] = False
@@ -43,7 +43,7 @@ def run_simulation(policy: str, settings: dict) -> None:
                 env_PPO = AI4LEnvironment(settings)
 
                 model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=0)
-                model.learn(total_timesteps=60000)
+                model.learn(total_timesteps=4000)
                 model.save("ppo_dirp")
                 settings['routing_approx'] = False
 
@@ -62,7 +62,7 @@ def run_simulation(policy: str, settings: dict) -> None:
 
         # save results
         df = df.append(
-            {'iteration': iteration, 'inventory': obs_old, 'action': action, 'reward': reward, 'avgCost': env.avgCost,
+            {'iteration': iteration, 'inventory': obs_old, 'action': info['action'], 'shipped': info['shipped'], 'reward': reward, 'avgCost': env.avgCost,
              'HoldCost': info['HoldingCost'], 'LostCost': info['LostCost'], 'RoutingCost': info['TransportationCost']},
             ignore_index=True)
 
