@@ -36,25 +36,47 @@ for _ in range(10):
 
 a = 1
 # create NN which with input the orders and as output the routing cost
-
+import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense
 
 # define the neural network model
 model = Sequential()
-model.add(Dense(10, input_dim=20, activation='relu'))
+model.add(Dense(10, input_shape=(3,), activation='relu'))
 model.add(Dense(1, activation='linear'))
 
 # compile the model
 model.compile(loss='mean_squared_error', optimizer='adam')
 
 # define the input and output data
-X = [[0, 12, 11]]
-Y = [-100]
+X = np.array([[1,3,2], [2,4,4], [3,8,7]])
+Y = np.array([[20], [40], [80]])
 
 # train the model
 model.fit(X, Y, epochs=1000, verbose=0)
 
 # make a prediction
-result = model.predict([[0, 12, 11]])
+result = model.predict(np.array([[4,5,6]]))
 print(result)
+
+# from keras.models import Sequential
+# from keras.layers import Dense
+#
+# # define the neural network model
+# model = Sequential()
+# model.add(Dense(10, input_dim=20, activation='relu'))
+# model.add(Dense(1, activation='linear'))
+#
+# # compile the model
+# model.compile(loss='mean_squared_error', optimizer='adam')
+#
+# # define the input and output data
+# X = [[0, 12, 11]]
+# Y = [-100]
+#
+# # train the model
+# model.fit(X, Y, epochs=1000, verbose=0)
+#
+# # make a prediction
+# result = model.predict([[0, 12, 11]])
+# print(result)
