@@ -43,7 +43,7 @@ def run_simulation(policy: str, settings: dict) -> None:
                 env_PPO = AI4LEnvironment(settings)
 
                 model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=0)
-                model.learn(total_timesteps=4000)
+                model.learn(total_timesteps=2000000)
                 model.save("ppo_dirp")
                 settings['routing_approx'] = False
 
