@@ -8,7 +8,7 @@ settings = {'transport_distance_factor': 1, 'transport_fixed_factor': 1, 'action
 env = RoutingCostEnv(settings)
 
 # create empty dataframe
-df = pd.DataFrame(columns=['action', 'inventory', 'routing_cost'])
+df = pd.DataFrame(columns=['action', 'inventory', 'orders', 'routing_cost'])
 
 
 for _ in range(10):
@@ -21,8 +21,11 @@ for _ in range(10):
     inventory = np.random.randint(0, 100, size=20)
     inventory[0] = 0
 
-    routing_cost = env.routing_cost(action, inventory)
+    routing_cost, orders = env.routing_cost(action, inventory)
 
-    df = df.append({'action': action, 'inventory': inventory, 'routing_cost': routing_cost}, ignore_index=True)
+    df = df.append({'action': action, 'inventory': inventory, 'orders': orders, 'routing_cost': routing_cost}, ignore_index=True)
 
 a = 1
+
+
+# create NN which has input

@@ -224,7 +224,7 @@ class RoutingCostEnv(gym.Env):
 
             result = hgs_solver.solve_cvrp(data_vrp)
 
-            return -1 * result.cost
+            return -1 * result.cost, self.data['demands']
     def generate_demand(self):
         # generate random demand
         demands = np.zeros(self.nStores+1)
