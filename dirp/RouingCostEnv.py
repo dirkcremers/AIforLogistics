@@ -172,7 +172,7 @@ class RoutingCostEnv(gym.Env):
 
         # if not trucks need to drive, then cost = 0
         if np.sum(action[1:]) == 0:
-            return 0
+            return 0, self.data['demands']
 
         # Heuristic approach to determine cost of transportation
         if self.settings['routing_approx']:
@@ -204,7 +204,7 @@ class RoutingCostEnv(gym.Env):
                 no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
                 routing_cost = self.data['distance_matrix'][0][store_index] + self.data['distance_matrix'][store_index][0]
 
-                return -1 * (routing_cost * no_trucks)
+                return -1 * (routing_cost * no_trucks), self.data['demands']
 
             # modify the problem such that the routing cost for all the
             # stores are only used for the stores which are getting replenished

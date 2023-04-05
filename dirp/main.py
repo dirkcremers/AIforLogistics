@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 from stable_baselines3 import PPO
 
-from dirp.AI4LEnvironment import AI4LEnvironment
-from dirp.PPO_util import linear_schedule
-from dirp.genetic_algorithm import GeneticAlgorithm
+from AI4LEnvironment import AI4LEnvironment
+from PPO_util import linear_schedule
+from genetic_algorithm import GeneticAlgorithm
 
 
 def run_simulation(policy: str, settings: dict) -> None:
@@ -62,7 +62,7 @@ def run_simulation(policy: str, settings: dict) -> None:
 
         # save results
         df = df.append(
-            {'iteration': iteration, 'inventory': obs_old, 'action': info['action'], 'shipped': info['shipped'], 'reward': reward, 'avgCost': env.avgCost,
+            {'iteration': iteration, 'inventory': obs_old, 'action': action, 'reward': reward, 'avgCost': env.avgCost,
              'HoldCost': info['HoldingCost'], 'LostCost': info['LostCost'], 'RoutingCost': info['TransportationCost']},
             ignore_index=True)
 
