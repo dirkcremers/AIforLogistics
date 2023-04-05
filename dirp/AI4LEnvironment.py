@@ -86,7 +86,7 @@ class AI4LEnvironment(gym.Env):
         self.capacity = 1000
 
         # The maximum to be shipped to a store
-        self.maxOrderQuantity = 1000
+        self.maxOrderQuantity = 100
 
         # the current amount of inventory in each store
         self.inventories = np.zeros(self.nStores + 1)
@@ -161,13 +161,8 @@ class AI4LEnvironment(gym.Env):
                                         self.capacity - self.inventories, self.data['demands'])
         self.data['demands'] = np.where(orderUpTo - self.inventories < 0, 0, self.data['demands'])
 
-        print('action before: ', action)
-        print('orders to be shipped: ', self.data['demands'])
-
         action = np.where(self.data['demands'] > 0, action, 0)
         action[0] = 1
-
-        print('action after adjusting: ', action)
 
         # for bookkeeping purposes
         self.action_taken = action
