@@ -152,27 +152,28 @@ class RoutingCostEnv(gym.Env):
         self.spec = None
         self.metadata = None
 
-    def routing_cost(self, inventory, action):
+    def routing_cost(self, test):
 
-        self.inventories = inventory
+        # self.inventories = inventory
+        #
+        # # Fix depot to be always visited
+        # orderUpTo = np.ceil(self.demandMean * action + 1.96 * np.sqrt(action) * self.demandStdev)
+        # self.data['demands'] = np.where(orderUpTo - self.inventories > self.maxOrderQuantity, self.maxOrderQuantity, orderUpTo - self.inventories)
+        # self.data['demands'] = np.where(orderUpTo >= self.capacity,
+        #                                 self.capacity - self.inventories, self.data['demands'])
+        # self.data['demands'] = np.where(orderUpTo - self.inventories < 0, 0, self.data['demands'])
+        #
+        # action = np.where(self.data['demands'] > 0, action, 0)
+        # action[0] = 1
 
-        # Fix depot to be always visited
-        orderUpTo = np.ceil(self.demandMean * action + 1.96 * np.sqrt(action) * self.demandStdev)
-        self.data['demands'] = np.where(orderUpTo - self.inventories > self.maxOrderQuantity, self.maxOrderQuantity, orderUpTo - self.inventories)
-        self.data['demands'] = np.where(orderUpTo >= self.capacity,
-                                        self.capacity - self.inventories, self.data['demands'])
-        self.data['demands'] = np.where(orderUpTo - self.inventories < 0, 0, self.data['demands'])
-
-        action = np.where(self.data['demands'] > 0, action, 0)
-        action[0] = 1
-
-        # for bookkeeping purposes
-        self.action_taken = action
-        self.order_shipped = self.data['demands']
+        # # for bookkeeping purposes
+        # self.action_taken = action
+        # self.order_shipped = self.data['demands']
+        self.data['demands'] = test
 
         # if not trucks need to drive, then cost = 0
-        if np.sum(action[1:]) == 0:
-            return 0, self.data['demands']
+        # if np.sum(action[1:]) == 0:
+        #     return 0, self.data['demands']
 
         # Heuristic approach to determine cost of transportation
         if self.settings['routing_approx']:
@@ -180,8 +181,11 @@ class RoutingCostEnv(gym.Env):
             # Optimal routing for the given problem (visiting every store | one truck)
             full_route = [0, 11, 12, 13, 14, 10, 9, 18, 19, 16, 17, 15, 7, 8, 6, 4, 5, 3, 2, 1, 0]
 
+            no_visited_stores = np.where(test == 0)[0]
+            no_visited_stores = no_visited_stores[1:]
+
             # Indexes of alle stores which are not visited by our action
-            stores_not_visited = [i for i, x in enumerate(action) if x == 0]
+            stores_not_visited = no_visited_stores #[i for i, x in enumerate(action) if x == 0]
 
             # Obtain approximation route by removing all stores which are not visited
             current_route = [x for x in full_route if x not in stores_not_visited]
@@ -194,24 +198,26 @@ class RoutingCostEnv(gym.Env):
 
             # print('Heuristic approach: ', cost)
 
-            return -1 * cost
+            return -1 * cost, test
 
         # Hygese best solution
         else:
-            if np.sum(np.where(action[1:] > 0, 1, 0)) == 1:
-                store_index = np.where(np.array(action) > 0)[0][1]
-
-                no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
-                routing_cost = self.data['distance_matrix'][0][store_index] + self.data['distance_matrix'][store_index][0]
-
-                return -1 * (routing_cost * no_trucks), self.data['demands']
+            # if np.sum(np.where(action[1:] > 0, 1, 0)) == 1:
+            #     store_index = np.where(np.array(action) > 0)[0][1]
+            #
+            #     no_trucks = np.ceil(self.data['demands'][store_index] / self.data['vehicle_capacity']).astype(int)
+            #     routing_cost = self.data['distance_matrix'][0][store_index] + self.data['distance_matrix'][store_index][0]
+            #
+            #     return -1 * (routing_cost * no_trucks), self.data['demands']
 
             # modify the problem such that the routing cost for all the
             # stores are only used for the stores which are getting replenished
             # therefore create copy of the data
             data_vrp = self.data.copy()
 
-            no_visited_stores = np.where(np.array(action) == 0)[0]
+            no_visited_stores = np.where(data_vrp['demands'] == 0)[0]
+            no_visited_stores = no_visited_stores[1:]
+
 
             data_vrp['distance_matrix'] = np.delete(data_vrp['distance_matrix'], no_visited_stores, axis=0)
             data_vrp['distance_matrix'] = np.delete(data_vrp['distance_matrix'], no_visited_stores, axis=1)
