@@ -42,7 +42,7 @@ def run_simulation(policy: str, settings: dict) -> None:
                 settings['routing_approx'] = True
                 env_PPO = AI4LEnvironment(settings)
 
-                model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=0)
+                model = PPO('MlpPolicy', env_PPO, gamma=0.95, learning_rate=linear_schedule(0.001), verbose=1)
                 model.learn(total_timesteps=2000000)
                 model.save("ppo_dirp")
                 settings['routing_approx'] = False
@@ -71,16 +71,16 @@ def run_simulation(policy: str, settings: dict) -> None:
     no_actions = settings['action_space']
     transportation_factor = settings['transport_distance_factor']
 
-    df.to_csv(f'results_{policy}_{no_actions}_{transportation_factor}.csv', index=False)
+    df.to_csv(f'results_seasonality2{policy}_{no_actions}_{transportation_factor}.csv', index=False)
 
 
 if __name__ == '__main__':
 
-    # Marnik
     # note that actual actions are: action_space - 1
     # settings = {'transport_distance_factor': 1,
     #             'transport_fixed_factor': 1,
-    #             'action_space': 2}
+    #             'action_space': 2,
+    #             'seasonality': 0}
     #
     # run_simulation('SS', settings)
     # run_simulation('GA', settings)
@@ -88,21 +88,25 @@ if __name__ == '__main__':
 
     # settings = {'transport_distance_factor': 1,
     #             'transport_fixed_factor': 1,
-    #             'action_space': 4}
+    #             'action_space': 4,
+    #             'seasonality': 0}
     # run_simulation('GA', settings)
 
-    # settings = {'transport_distance_factor': 1,
-    #             'transport_fixed_factor': 1,
-    #             'action_space': 8}
-    # run_simulation('PPO', settings)
+    settings = {'transport_distance_factor': 1,
+                'transport_fixed_factor': 1,
+                'action_space': 8,
+                'seasonality': 1}
+    run_simulation('PPO', settings)
 
     # settings = {'transport_distance_factor': 5,
     #             'transport_fixed_factor': 1,
-    #             'action_space': 4}
+    #             'action_space': 4,
+    #             'seasonality': 0}
     #
     # run_simulation('GA', settings)
 
-    settings = {'transport_distance_factor': 5,
-                'transport_fixed_factor': 1,
-                'action_space': 8}
-    run_simulation('PPO', settings)
+    # settings = {'transport_distance_factor': 5,
+    #             'transport_fixed_factor': 1,
+    #             'action_space': 8,
+    #             'seasonality' : 0}
+    # run_simulation('PPO', settings)

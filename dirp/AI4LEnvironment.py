@@ -120,6 +120,11 @@ class AI4LEnvironment(gym.Env):
         # Standard deviation
         self.demandStdev = np.ceil(np.random.rand(self.nStores + 1) * 0.5 * self.demandMean)
 
+        if self.settings['seasonality']:
+            self.seasonalityWeek = [0.8, 1.2, 1, 1, 0.9, 1.5, 0.6]
+        else:
+            self.seasonalityWeek = [1, 1, 1, 1, 1, 1, 1]
+
         # For bookkeeping purposes
         self.demands = np.zeros(self.nStores + 1)
         self.action = np.zeros(self.nStores + 1)
@@ -228,7 +233,8 @@ class AI4LEnvironment(gym.Env):
         demands = np.zeros(self.nStores+1)
 
         for i in range(1, self.nStores+1):
-            demands[i] = int(max(0, np.random.normal(self.demandMean[i], self.demandStdev[i])))
+            mean = int(self.demandMean[i]*self.seasonalityWeek[int(self.inventories[0])])
+            demands[i] = int(max(0, np.random.normal(mean, self.demandStdev[i])))
 
         return demands
 
@@ -249,7 +255,7 @@ class AI4LEnvironment(gym.Env):
         holding_cost = 0
         lost_cost = 0
 
-        for i in range(0, self.nStores+1):
+        for i in range(1, self.nStores+1):
             self.inventories[i] -= demands[i]
 
             # holding cost
@@ -278,6 +284,7 @@ class AI4LEnvironment(gym.Env):
 
         # in this example it is rather simple; the inventory is shipped
         self.inventories = self.inventories + self.data['demands']
+        self.inventories[0] = (self.inventories[0]+1) % 7
 
     def reset(self):
         # Reset the state of the environment to an initial state
